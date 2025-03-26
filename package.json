@@ -1,0 +1,15 @@
+{
+  "name": "wccbackend",
+  "version": "1.0.0",
+  "description": "Express backend for WCC",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "dotenv": "^16.3.1",
+    "cors": "^2.8.5"
+  }
+}
