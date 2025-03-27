@@ -9,6 +9,7 @@ const { createServer } = require("http");
 const { Server } = require("socket.io");
 const messageRoutes = require("./routes/messages.js");
 const connectDB = require("./config/db.js");
+const Team = require('./models/Team.js')
 
 dotenv.config();
 connectDB();
@@ -23,6 +24,33 @@ const io = new Server(server, { cors: { origin: "*" } });
 app.use(cors());
 app.use(express.json());
 app.use("/api/messages", messageRoutes);
+
+app.post('/team', async (req, res) => {
+  const { name, score, victories, losses, bestPlayer } = req.body;
+  const team = await Team.findOneAndUpdate(
+      { name },
+      { score, victories, losses, bestPlayer },
+      { upsert: true, new: true }
+  );
+  res.json(team);
+});
+
+app.get('/team/:name', async (req, res) => {
+  const team = await Team.findOne({ name: req.params.name });
+  if (!team) return res.status(404).json({ message: 'Team not found' });
+  res.json(team);
+});
+
+app.put('/team/:name', async (req, res) => {
+  const { score, victories, losses, bestPlayer } = req.body;
+  const team = await Team.findOneAndUpdate(
+      { name: req.params.name },
+      { score, victories, losses, bestPlayer },
+      { new: true }
+  );
+  if (!team) return res.status(404).json({ message: 'Team not found' });
+  res.json(team);
+});
 
 // 📌 Ensure `public/img/` directory exists
 const uploadDir = "public/img/";
