@@ -14,7 +14,7 @@ dotenv.config();
 connectDB();
 
 const job = require('./cron.js');
-job.start();
+// job.start();
 
 const app = express();
 const server = createServer(app);
