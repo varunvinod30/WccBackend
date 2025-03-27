@@ -26,30 +26,45 @@ app.use(express.json());
 app.use("/api/messages", messageRoutes);
 
 app.post('/team', async (req, res) => {
-  const { name, score, victories, losses, bestPlayer } = req.body;
-  const team = await Team.findOneAndUpdate(
-      { name },
-      { score, victories, losses, bestPlayer },
-      { upsert: true, new: true }
-  );
-  res.json(team);
-});
+  try {
+      const { team1, team2 } = req.body;
+      if (!team1 || !team2) return res.status(400).json({ message: "Both teams are required" });
 
-app.get('/team/:name', async (req, res) => {
-  const team = await Team.findOne({ name: req.params.name });
-  if (!team) return res.status(404).json({ message: 'Team not found' });
-  res.json(team);
-});
+      // Function to find or create/update a team
+      const upsertTeam = async (teamData) => {
+          let team;
+          if (teamData.teamId) {
+              team = await Team.findOne({ teamId: teamData.teamId });
+              if (team) {
+                  team.score = teamData.score;
+                  team.victories = teamData.victories;
+                  team.losses = teamData.losses;
+                  team.bestPlayer = teamData.bestPlayer;
+                  await team.save();
+                  return team;
+              }
+          }
+          team = await Team.findOne({ name: teamData.name });
+          if (!team) {
+              team = new Team(teamData);
+          } else {
+              team.score = teamData.score;
+              team.victories = teamData.victories;
+              team.losses = teamData.losses;
+              team.bestPlayer = teamData.bestPlayer;
+          }
+          await team.save();
+          return team;
+      };
 
-app.put('/team/:name', async (req, res) => {
-  const { score, victories, losses, bestPlayer } = req.body;
-  const team = await Team.findOneAndUpdate(
-      { name: req.params.name },
-      { score, victories, losses, bestPlayer },
-      { new: true }
-  );
-  if (!team) return res.status(404).json({ message: 'Team not found' });
-  res.json(team);
+      // Process both teams
+      const savedTeam1 = await upsertTeam(team1);
+      const savedTeam2 = await upsertTeam(team2);
+
+      res.json({ team1: savedTeam1, team2: savedTeam2 });
+  } catch (error) {
+      res.status(500).json({ message: "Internal server error", error });
+  }
 });
 
 // 📌 Ensure `public/img/` directory exists
