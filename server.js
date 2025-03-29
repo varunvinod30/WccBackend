@@ -10,6 +10,8 @@ const { Server } = require("socket.io");
 const messageRoutes = require("./routes/messages.js");
 const connectDB = require("./config/db.js");
 const Team = require('./models/Team.js')
+const authRoutes = require('./routes/users.js')
+const Message = require("./models/Message.js");
 
 dotenv.config();
 connectDB();
@@ -23,6 +25,7 @@ const io = new Server(server, { cors: { origin: "*" } });
 
 app.use(cors());
 app.use(express.json());
+app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
 app.get("/api/teams", async (req, res) => {
@@ -206,14 +209,16 @@ app.post("/api/upload", upload.single("image"), (req, res) => {
 
 // 📌 WebSockets (Retained from Original Code)
 io.on("connection", (socket) => {
-  console.log("🟢 User connected:", socket.id);
+  console.log("A user connected");
 
-  socket.on("sendMessage", async (msg) => {
-    io.emit("receiveMessage", msg);
+  socket.on("sendMessage", async (data) => {
+      const newMessage = new Message(data);
+      await newMessage.save();
+      io.emit("receiveMessage", newMessage);
   });
 
   socket.on("disconnect", () => {
-    console.log("🔴 User disconnected");
+      console.log("A user disconnected");
   });
 });
 
