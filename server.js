@@ -2,12 +2,12 @@ const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const http = require("http");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
-const messageRoutes = require("./routes/messages.js");
 const connectDB = require("./config/db.js");
 const Team = require('./models/Team.js')
 const authRoutes = require('./routes/users.js')
@@ -20,13 +20,28 @@ const job = require('./cron.js');
 job.start();
 
 const app = express();
-const server = createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
 
 app.use(cors());
 app.use(express.json());
 app.use("/api/auth", authRoutes);
+const messageRoutes = require("./routes/messages")(io);
 app.use("/api/messages", messageRoutes);
+
+// Handle socket.io connections
+io.on("connection", (socket) => {
+    console.log("A user connected");
+
+    socket.on("disconnect", () => {
+        console.log("A user disconnected");
+    });
+});
 
 app.get("/api/teams", async (req, res) => {
   try {
@@ -207,20 +222,6 @@ app.post("/api/upload", upload.single("image"), (req, res) => {
   res.status(200).send("Image uploaded successfully.");
 });
 
-// 📌 WebSockets (Retained from Original Code)
-io.on("connection", (socket) => {
-  console.log("A user connected");
-
-  socket.on("sendMessage", async (data) => {
-      const newMessage = new Message(data);
-      await newMessage.save();
-      io.emit("receiveMessage", newMessage);
-  });
-
-  socket.on("disconnect", () => {
-      console.log("A user disconnected");
-  });
-});
 
 const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
