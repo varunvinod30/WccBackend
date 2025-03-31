@@ -12,6 +12,7 @@ const connectDB = require("./config/db.js");
 const Team = require('./models/Team.js')
 const authRoutes = require('./routes/users.js')
 const Message = require("./models/Message.js");
+const imageRoutes = require("./routes/images.js");
 
 dotenv.config();
 connectDB();
@@ -31,6 +32,7 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 app.use("/api/auth", authRoutes);
+app.use("/api/image", imageRoutes);
 const messageRoutes = require("./routes/messages")(io);
 app.use("/api/messages", messageRoutes);
 
