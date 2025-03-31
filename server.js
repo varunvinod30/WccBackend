@@ -196,34 +196,5 @@ app.post("/api/team/end-series", async (req, res) => {
   }
 });
 
-
-// 📌 Ensure `public/img/` directory exists
-const uploadDir = "public/img/";
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// 📌 Multer Storage Setup (Always Overwrites Previous Image)
-const storage = multer.diskStorage({
-  destination: uploadDir,
-  filename: (req, file, cb) => {
-    cb(null, "picture-of-the-day.jpg"); // Overwrites previous file
-  },
-});
-
-const upload = multer({ storage });
-
-// 📌 Serve Static Files from `public/`
-app.use(express.static("public"));
-
-// 📌 API Endpoint: Upload Image
-app.post("/api/upload", upload.single("image"), (req, res) => {
-  if (!req.file) {
-    return res.status(400).send("No file uploaded.");
-  }
-  res.status(200).send("Image uploaded successfully.");
-});
-
-
 const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
