@@ -67,20 +67,35 @@ app.get("/api/teams", async (req, res) => {
 
 
 app.post("/api/team", async (req, res) => {
-  const { teamId, teamName, captain, coreTeam } = req.body;
-
-  try {
-      await Team.findOneAndReplace(
-          { teamId }, 
-          { teamId, teamName, captain, coreTeam }, 
-          { upsert: true, new: true }  // Upsert ensures if no data exists, it creates a new entry
-      );
-
-      return res.json({ message: `Team ${teamId} updated successfully!` });
-  } catch (error) {
+    const { teamId, teamName, captain, coreTeam } = req.body;
+  
+    try {
+      let existingTeam = await Team.findOne({ teamId });
+  
+      if (existingTeam) {
+        existingTeam.teamName = teamName;
+        existingTeam.captain = captain;
+        existingTeam.coreTeam = coreTeam;
+      } else {
+        existingTeam = new Team({
+          teamId,
+          teamName,
+          captain,
+          coreTeam,
+          points: 0,
+          score: Array(15).fill('-'), 
+          prevSeries: [],
+        });
+      }
+  
+      await existingTeam.save();
+      return res.json({ message: `Team ${teamId} saved successfully!` });
+    } catch (error) {
+      console.error("Error updating/saving team:", error);
       res.status(500).json({ error: "Database error" });
-  }
-});
+    }
+  });
+  
 
 
 app.put('/api/team/update-points', async (req, res) => {
