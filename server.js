@@ -13,6 +13,7 @@ const Team = require('./models/Team.js')
 const authRoutes = require('./routes/users.js')
 const Message = require("./models/Message.js");
 const imageRoutes = require("./routes/images.js");
+const teamRoutes = require("./routes/teamRoutes.js");
 
 dotenv.config();
 connectDB();
@@ -33,6 +34,7 @@ app.use(cors());
 app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/image", imageRoutes);
+app.use("/api/team", teamRoutes);
 const messageRoutes = require("./routes/messages")(io);
 app.use("/api/messages", messageRoutes);
 
@@ -95,121 +97,5 @@ app.post("/api/team", async (req, res) => {
       res.status(500).json({ error: "Database error" });
     }
   });
-  
-
-
-app.put('/api/team/update-points', async (req, res) => {
-  try {
-      const { winnerId } = req.body;
-      const loserId = winnerId === 'team1' ? 'team2' : 'team1';
-
-      const winner = await Team.findOne({ teamId: winnerId });
-      const loser = await Team.findOne({ teamId: loserId });
-
-      if (!winner || !loser) {
-          return res.status(404).json({ message: "Teams not found" });
-      }
-
-      // Update points
-      winner.points += 1;
-
-      // Maintain FIFO structure (Max 15)
-      winner.score.push("W");
-      loser.score.push("L");
-      if (winner.score.length > 15) winner.score.shift();
-      if (loser.score.length > 15) loser.score.shift();
-
-      await winner.save();
-      await loser.save();
-
-      res.json({ winner, loser });
-  } catch (error) {
-      res.status(500).json({ message: "Internal server error", error });
-  }
-});
-
-app.put('/api/team/revert', async (req, res) => {
-  try {
-      const { lastWinnerId } = req.body;
-      const lastLoserId = lastWinnerId === 'team1' ? 'team2' : 'team1';
-
-      const lastWinner = await Team.findOne({ teamId: lastWinnerId });
-      const lastLoser = await Team.findOne({ teamId: lastLoserId });
-
-      if (!lastWinner || !lastLoser || lastWinner.score.length === 0 || lastLoser.score.length === 0) {
-          return res.status(400).json({ message: "No history to revert" });
-      }
-
-      // Remove last update
-      lastWinner.points -= 1;
-      lastWinner.score.pop();
-      lastLoser.score.pop();
-
-      await lastWinner.save();
-      await lastLoser.save();
-
-      res.json({ lastWinner, lastLoser });
-  } catch (error) {
-      res.status(500).json({ message: "Internal server error", error });
-  }
-});
-
-app.post("/api/team/end-series", async (req, res) => {
-  try {
-      const teams = await Team.find({ teamId: { $in: ["team1", "team2"] } });
-
-      if (teams.length !== 2) {
-          return res.status(400).json({ error: "Both teams must exist in the database." });
-      }
-
-      // Determine the team with the highest points
-      const [team1, team2] = teams;
-      let winningCaptain = "";
-      let winningTeamName = "";
-
-      if (team1.points > team2.points) {
-          winningCaptain = team1.captain;
-          winningTeamName = team1.teamName;
-      } else if (team2.points > team1.points) {
-          winningCaptain = team2.captain;
-          winningTeamName = team2.teamName;
-      } else {
-          winningCaptain = "Draw"; // Handle case where both teams have the same points
-          winningTeamName = "Draw";
-      }
-
-      // Reset points & score, and store both the winning captain and team name in `prevSeries`
-      await Promise.all([
-          Team.findOneAndUpdate(
-              { teamId: "team1" },
-              {
-                  points: 0,
-                  score: Array(15).fill("-"),
-                  prevSeries: winningCaptain !== "Draw" ? [winningCaptain, winningTeamName] : team1.prevSeries
-              },
-              { new: true }
-          ),
-          Team.findOneAndUpdate(
-              { teamId: "team2" },
-              {
-                  points: 0,
-                  score: Array(15).fill("-"),
-                  prevSeries: winningCaptain !== "Draw" ? [winningCaptain, winningTeamName] : team2.prevSeries
-              },
-              { new: true }
-          )
-      ]);
-
-      return res.json({
-          message: "Series ended successfully!",
-          winner: { captain: winningCaptain, team: winningTeamName }
-      });
-
-  } catch (error) {
-      console.error("Error ending series:", error);
-      res.status(500).json({ error: "Database error" });
-  }
-});
-
 const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

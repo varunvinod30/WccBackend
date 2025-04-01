@@ -8,7 +8,7 @@ const teamSchema = new mongoose.Schema({
     score: { type: [String], default: Array(15).fill('-') },
     points: { type: Number, default: 0 },
     coreTeam: [String],
-    prevSeries: { type: [String], default: [] }
+    startDate: { type: Date, default: null }
 });
 
 module.exports = mongoose.model('Team', teamSchema);
