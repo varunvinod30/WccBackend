@@ -51,8 +51,8 @@ app.get("/api/teams", async (req, res) => {
 
       // Create default objects if teams don't exist in DB
       const defaultTeams = {
-          team1: { teamId: "team1", teamName: "", captain: "", coreTeam: [] },
-          team2: { teamId: "team2", teamName: "", captain: "", coreTeam: [] }
+          team1: { teamId: "team1", teamName: "", captain: "", coreTeam: [], points: 0, score: Array(15).fill('-'), prevSeries: []},
+          team2: { teamId: "team2", teamName: "", captain: "", coreTeam: [], points: 0, score: Array(15).fill('-'), prevSeries: []}
       };
 
       teams.forEach(team => {
