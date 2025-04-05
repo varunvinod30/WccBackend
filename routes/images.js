@@ -63,4 +63,35 @@ router.get("/get-image", async (req, res) => {
     }
 });
 
+router.post("/filter", async (req, res) => {
+    try {
+        const filters = req.body;
+        const image = await Image.findOne({});
+        if (!image) return res.json({ history: [] });
+
+        let filteredHistory = image.history;
+
+        Object.entries(filters).forEach(([key, value]) => {
+            if (key === "date") {
+                if (value.year) {
+                    filteredHistory = filteredHistory.filter((entry) => entry.date.startsWith(value.year));
+                }
+                if (value.month) {
+                    filteredHistory = filteredHistory.filter((entry) => entry.date.split("-")[1] === value.month);
+                }
+                if (value.day) {
+                    filteredHistory = filteredHistory.filter((entry) => entry.date.split("-")[2] === value.day);
+                }
+            } else {
+                filteredHistory = filteredHistory.filter((entry) => entry[key] === value);
+            }
+        });
+
+        res.json({ history: filteredHistory });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to filter history" });
+    }
+});
+
 module.exports = router;
