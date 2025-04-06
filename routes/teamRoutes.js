@@ -190,15 +190,15 @@ router.post("/filter-series", async (req, res) => {
             });
           }
   
-        } else if (key === "teams") {
+        } else if (key === "Series Name") {
           filteredSeries = filteredSeries.filter(series =>
             series.teams.teamA === value || series.teams.teamB === value
           );
-        } else if (key === "captains") {
+        } else if (key === "Captains") {
           filteredSeries = filteredSeries.filter(series =>
             series.captain.teamA === value || series.captain.teamB === value
           );
-        } else if (key === "winner") {
+        } else if (key === "Winning team") {
           filteredSeries = filteredSeries.filter(series => {
             const winner =
               series.points.teamA > series.points.teamB
