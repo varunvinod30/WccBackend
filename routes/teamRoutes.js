@@ -163,4 +163,56 @@ router.post("/end-series", async (req, res) => {
     }
 });
 
+router.post("/filter-series", async (req, res) => {
+    try {
+      const filters = req.body;
+      const allSeries = await SeriesHistory.find({});
+      let filteredSeries = allSeries;
+  
+      Object.entries(filters).forEach(([key, value]) => {
+        if (key === "date") {
+          const { startDate, endDate } = value;
+  
+          if (startDate && endDate) {
+            filteredSeries = filteredSeries.filter(series => {
+              const seriesStart = new Date(series.startDate).toISOString().split("T")[0];
+              return seriesStart >= startDate && seriesStart <= endDate;
+            });
+          } else if (startDate) {
+            filteredSeries = filteredSeries.filter(series => {
+              const seriesStart = new Date(series.startDate).toISOString().split("T")[0];
+              return seriesStart === startDate;
+            });
+          } else if (endDate) {
+            filteredSeries = filteredSeries.filter(series => {
+              const seriesEnd = new Date(series.endDate).toISOString().split("T")[0];
+              return seriesEnd === endDate;
+            });
+          }
+  
+        } else if (key === "teams") {
+          filteredSeries = filteredSeries.filter(series =>
+            series.teams.teamA === value || series.teams.teamB === value
+          );
+        } else if (key === "captains") {
+          filteredSeries = filteredSeries.filter(series =>
+            series.captain.teamA === value || series.captain.teamB === value
+          );
+        } else if (key === "winner") {
+          filteredSeries = filteredSeries.filter(series => {
+            const winner =
+              series.points.teamA > series.points.teamB
+                ? series.teams.teamA
+                : series.teams.teamB;
+            return winner === value;
+          });
+        }
+      });
+  
+      res.json({ history: filteredSeries });
+    } catch (err) {
+      console.error("Filter error:", err);
+      res.status(500).json({ error: "Failed to filter series history" });
+    }
+  });
 module.exports = router;
