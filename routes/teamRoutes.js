@@ -209,10 +209,14 @@ router.post("/filter-series", async (req, res) => {
           );
         } else if (key === "Winning captian") {
           filteredSeries = filteredSeries.filter(series => {
-            const winner =
-              series.points.teamA > series.points.teamB
+            let winner;
+            if (series.points.teamA === series.points.teamB) {
+              winner = `${series.captain.teamA}, ${series.captain.teamB}`;
+            } else {
+              winner = series.points.teamA > series.points.teamB
                 ? series.captain.teamA
                 : series.captain.teamB;
+            }
             return winner === value;
           });
         }
