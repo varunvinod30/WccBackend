@@ -93,6 +93,14 @@ router.put("/revert", async (req, res) => {
     }
 });
 
+const formatDate = (date) => {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = (`0${d.getMonth() + 1}`).slice(-2);
+  const day = (`0${d.getDate()}`).slice(-2);
+  return `${year}${month}${day}`;
+};
+
 // End Series API
 router.post("/end-series", async (req, res) => {
     try {
@@ -118,12 +126,13 @@ router.post("/end-series", async (req, res) => {
         }
 
         const endDate = new Date();
+        const formattedDate = formatDate(team1.startDate); 
 
         // Save previous series in separate collection
         await SeriesHistory.create({
             teams: {
-                teamA: team1.teamName,
-                teamB: team2.teamName
+                teamA: `${team1.teamName}${formattedDate}`,
+                teamB: `${team2.teamName}${formattedDate}`
             },
             captain: {
                 teamA: team1.captain,
@@ -198,12 +207,12 @@ router.post("/filter-series", async (req, res) => {
           filteredSeries = filteredSeries.filter(series =>
             series.captain.teamA === value || series.captain.teamB === value
           );
-        } else if (key === "Winning team") {
+        } else if (key === "Winning captian") {
           filteredSeries = filteredSeries.filter(series => {
             const winner =
               series.points.teamA > series.points.teamB
-                ? series.teams.teamA
-                : series.teams.teamB;
+                ? series.captain.teamA
+                : series.captain.teamB;
             return winner === value;
           });
         }
@@ -215,4 +224,50 @@ router.post("/filter-series", async (req, res) => {
       res.status(500).json({ error: "Failed to filter series history" });
     }
   });
+
+  router.post('/add', async (req, res) => {
+    try {
+        const {
+            teams,
+            captain,
+            score,
+            points,
+            startDate,
+            endDate
+        } = req.body;
+
+        // Look for an existing record with same teamA, teamB, and startDate
+        const existing = await SeriesHistory.findOne({
+            'teams.teamA': teams.teamA,
+            'teams.teamB': teams.teamB
+        });
+
+        if (existing) {
+            // Update the existing document
+            existing.captain = captain;
+            existing.score = score;
+            existing.points = points;
+            existing.startDate = startDate;
+            existing.endDate = endDate;
+
+            const updated = await existing.save();
+            res.status(200).json({ message: 'Series updated', data: updated });
+        } else {
+            // Create a new one if it doesn't exist
+            const newSeries = new SeriesHistory({
+                teams,
+                captain,
+                score,
+                points,
+                startDate,
+                endDate
+            });
+
+            const savedSeries = await newSeries.save();
+            res.status(201).json({ message: 'Series created', data: savedSeries });
+        }
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
 module.exports = router;
