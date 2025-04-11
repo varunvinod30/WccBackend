@@ -20,31 +20,54 @@ connectDB();
 
 const job = require('./cron.js');
 job.start();
-
+const allowedOrigins = [
+  "http://localhost:3001", // ✅ Local React
+  "https://wccoffl.vercel.app" // ✅ Replace with your actual Vercel frontend URL
+];
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-    }
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true
+  }
 });
 
-app.use(cors());
+app.use(cors({
+  origin: allowedOrigins,
+  methods: ["GET", "POST"],
+  credentials: true
+}));
 app.use(express.json());
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
 app.use("/api/auth", authRoutes);
 app.use("/api/image", imageRoutes);
 app.use("/api/team", teamRoutes);
-const messageRoutes = require("./routes/messages")(io);
-app.use("/api/messages", messageRoutes);
+const messageRoutes = require("./routes/messages");
+app.use("/api/messages", messageRoutes(io));
 
 // Handle socket.io connections
 io.on("connection", (socket) => {
-    console.log("A user connected");
+  console.log("🔌 A user connected");
 
-    socket.on("disconnect", () => {
-        console.log("A user disconnected");
-    });
+  socket.on("sendMessage", async (data) => {
+    try {
+      const { username, message } = data;
+      const newMessage = new Message({ username, message });
+      await newMessage.save();
+      io.emit("receiveMessage", newMessage);
+    } catch (err) {
+      console.error("Error in sendMessage:", err);
+    }
+  });
+
+  socket.on("disconnect", () => {
+    console.log("❌ A user disconnected");
+  });
 });
 
 app.get("/api/teams", async (req, res) => {
