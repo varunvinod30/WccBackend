@@ -94,4 +94,13 @@ router.post("/filter", async (req, res) => {
     }
 });
 
+router.delete("/deleteall", async (req, res) => {
+    try {
+        await Image.deleteMany({});
+        res.status(200).json({ message: "All data deleted successfully." });
+    } catch (error) {
+        res.status(500).json({ message: "Error deleting data", error });
+    }
+});
+
 module.exports = router;
