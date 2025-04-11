@@ -21,7 +21,7 @@ connectDB();
 const job = require('./cron.js');
 job.start();
 const allowedOrigins = [
-  "http://localhost:3001", // ✅ Local React
+  "http://localhost:3000", // ✅ Local React
   "https://wccoffl.vercel.app" // ✅ Replace with your actual Vercel frontend URL
 ];
 const app = express();
