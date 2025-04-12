@@ -207,11 +207,11 @@ router.post("/filter-series", async (req, res) => {
           filteredSeries = filteredSeries.filter(series =>
             series.captain.teamA === value || series.captain.teamB === value
           );
-        } else if (key === "Winning captian") {
+        } else if (key === "Winning captain") {
           filteredSeries = filteredSeries.filter(series => {
             let winner;
             if (series.points.teamA === series.points.teamB) {
-              winner = `${series.captain.teamA}, ${series.captain.teamB}`;
+              return false;
             } else {
               winner = series.points.teamA > series.points.teamB
                 ? series.captain.teamA
