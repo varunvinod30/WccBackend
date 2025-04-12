@@ -208,18 +208,18 @@ router.post("/filter-series", async (req, res) => {
             series.captain.teamA === value || series.captain.teamB === value
           );
         } else if (key === "Winning captain") {
-          filteredSeries = filteredSeries.filter(series => {
-            let winner;
-            if (series.points.teamA === series.points.teamB) {
-              return false;
-            } else {
-              winner = series.points.teamA > series.points.teamB
+          if (value === "Draw") {
+            filteredSeries = filteredSeries.filter(series => series.points.teamA === series.points.teamB);
+          } else {
+            filteredSeries = filteredSeries.filter(series => {
+              if (series.points.teamA === series.points.teamB) return false;
+              const winner = series.points.teamA > series.points.teamB
                 ? series.captain.teamA
                 : series.captain.teamB;
-            }
-            return winner === value;
-          });
+              return winner === value;
+            });
         }
+      }
       });
   
       res.json({ history: filteredSeries });
