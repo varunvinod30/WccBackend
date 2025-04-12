@@ -29,14 +29,14 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST","PUT","DELETE"],
     credentials: true
   }
 });
 
 app.use(cors({
   origin: allowedOrigins,
-  methods: ["GET", "POST"],
+  methods: ["GET", "POST","PUT","DELETE"],
   credentials: true
 }));
 app.use(express.json());
